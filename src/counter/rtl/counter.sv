@@ -4,6 +4,9 @@ module counter #(
     input  logic             clk_i,
     input  logic             rstn_i,
     input  logic             en_i,
+    input  logic             up_count_i,
+    input  logic             load_i,
+    input  logic [WIDTH-1:0] load_value_i,
     output logic [WIDTH-1:0] count_o
 );
 
@@ -12,8 +15,14 @@ module counter #(
   always_ff @(posedge clk_i) begin
     if (!rstn_i) begin
       count_o <= '0;
+    end else if (load_i) begin
+      count_o <= load_value_i;
     end else if (en_i) begin
-      count_o <= count_o + 1'b1;
+      if (up_count_i) begin
+        count_o <= count_o + 1'b1;
+      end else begin
+        count_o <= count_o - 1'b1;
+      end
     end
   end
 
