@@ -1,5 +1,7 @@
 SHELL := /bin/bash
 
+BASE ?= origin/main
+
 VERILATOR      ?= verilator
 VERIBLE_FORMAT ?= verible-verilog-format
 VERIBLE_LINT   ?= verible-verilog-lint
@@ -45,6 +47,7 @@ endif
 
 .PHONY: help
 .PHONY: list
+.PHONY: changed-ips
 .PHONY: format format-check
 .PHONY: lint lint-style lint-verilator
 .PHONY: test check
@@ -70,6 +73,7 @@ help:
 	@echo ""
 	@echo "Other targets:"
 	@echo ""
+	@echo "  make changed-ips"
 	@echo "  make list"
 	@echo "  make clean-all"
 
@@ -85,6 +89,8 @@ list:
 		| sed 's|^  $(SRC_ROOT)/|  |' \
 		| sort
 
+changed-ips:
+	@./utils/detect_changes.sh $(BASE)
 
 # -----------------------------------------------------------------------------
 # Formatting

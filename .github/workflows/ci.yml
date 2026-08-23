@@ -1,0 +1,193 @@
+name: CI
+
+on:
+  pull_request:
+    branches:
+      - main
+
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  VERIBLE_VERSION: v0.0-4148-g1ea007ec
+
+
+jobs:
+
+  # ===========================================================================
+  # Detect modified IP cores
+  # ===========================================================================
+
+  detect-changed-ips:
+    name: Detect changed IPs
+
+    runs-on: ubuntu-24.04
+
+    outputs:
+      ips: ${{ steps.detect.outputs.ips }}
+      has_changes: ${{ steps.detect.outputs.has_changes }}
+
+    steps:
+
+      - name: Checkout repository
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Fetch main
+        run: |
+          git fetch \
+            --no-tags \
+            origin \
+            main:refs/remotes/origin/main
+
+      - name: Detect changed IP cores
+        id: detect
+        run: |
+          CHANGED_IPS="$(
+            ./scripts/ci/detect_changed_ips.sh origin/main
+          )"
+
+          echo "Changed IP cores:"
+          echo "${CHANGED_IPS:-<none>}"
+
+          IPS_JSON="$(
+            printf '%s\n' "${CHANGED_IPS}" |
+            python3 -c '
+          import json
+          import sys
+
+          ips = [
+              line.strip()
+              for line in sys.stdin
+              if line.strip()
+          ]
+
+          print(json.dumps(ips))
+          '
+          )"
+
+          echo "Matrix: ${IPS_JSON}"
+
+          echo "ips=${IPS_JSON}" >> "${GITHUB_OUTPUT}"
+
+          if [[ "${IPS_JSON}" == "[]" ]]; then
+            echo "has_changes=false" >> "${GITHUB_OUTPUT}"
+          else
+            echo "has_changes=true" >> "${GITHUB_OUTPUT}"
+          fi
+
+
+  # ===========================================================================
+  # Run one independent job per modified IP
+  # ===========================================================================
+
+  check-ip:
+    name: check / ${{ matrix.ip }}
+
+    needs:
+      - detect-changed-ips
+
+    if: needs.detect-changed-ips.outputs.has_changes == 'true'
+
+    runs-on: ubuntu-24.04
+
+    strategy:
+      fail-fast: false
+
+      matrix:
+        ip: ${{ fromJSON(needs.detect-changed-ips.outputs.ips) }}
+
+    steps:
+
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+
+          sudo apt-get install -y \
+            build-essential \
+            make \
+            verilator \
+            curl
+
+      - name: Install Verible
+        run: |
+          curl -fL \
+            "https://github.com/chipsalliance/verible/releases/download/${VERIBLE_VERSION}/verible-${VERIBLE_VERSION}-linux-static-x86_64.tar.gz" \
+            -o /tmp/verible.tar.gz
+
+          mkdir -p /tmp/verible
+
+          tar -xzf /tmp/verible.tar.gz \
+            -C /tmp/verible \
+            --strip-components=1
+
+          sudo install -m 0755 \
+            /tmp/verible/bin/verible-verilog-format \
+            /usr/local/bin/verible-verilog-format
+
+          sudo install -m 0755 \
+            /tmp/verible/bin/verible-verilog-lint \
+            /usr/local/bin/verible-verilog-lint
+
+      - name: Show tool versions
+        run: |
+          verilator --version
+          verible-verilog-format --version
+          verible-verilog-lint --version
+
+      - name: Check ${{ matrix.ip }}
+        env:
+          IP: ${{ matrix.ip }}
+        run: |
+          make check IP="${IP}"
+
+  # ===========================================================================
+  # Branch-protection check
+  # ===========================================================================
+
+  ci:
+    name: CI
+
+    needs:
+      - detect-changed-ips
+      - check-ip
+
+    if: always()
+
+    runs-on: ubuntu-24.04
+
+    steps:
+
+      - name: Evaluate CI result
+        env:
+          DETECT_RESULT: ${{ needs.detect-changed-ips.result }}
+          CHECK_RESULT: ${{ needs.check-ip.result }}
+          HAS_CHANGES: ${{ needs.detect-changed-ips.outputs.has_changes }}
+        run: |
+
+          echo "Detection: ${DETECT_RESULT}"
+          echo "IP checks: ${CHECK_RESULT}"
+          echo "Changed IPs: ${HAS_CHANGES}"
+
+          if [[ "${DETECT_RESULT}" != "success" ]]; then
+            echo "IP detection failed."
+            exit 1
+          fi
+
+          if [[ "${HAS_CHANGES}" == "true" &&
+                "${CHECK_RESULT}" != "success" ]]; then
+            echo "One or more IP checks failed."
+            exit 1
+          fi
+
+          echo "CI passed."
