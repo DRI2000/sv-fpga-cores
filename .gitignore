@@ -1,0 +1,29 @@
+# Verilator
+obj_dir/
+*.vcd
+*.fst
+
+# Simulation
+*.wlf
+
+# Vivado
+.Xil/
+*.jou
+*.log
+*.str
+*.xpr
+*.cache/
+*.hw/
+*.ip_user_files/
+*.runs/
+*.sim/
+*.gen/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# OS
+.DS_Store
+Thumbs.db
