@@ -28,7 +28,7 @@ for file in "${changed_files[@]}"; do
     case "${file}" in
         Makefile|\
         .rules.verible_lint|\
-        scripts/*|\
+        utils/*|\
         .github/workflows/*)
             infrastructure_changed=true
             break
