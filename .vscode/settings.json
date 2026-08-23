@@ -1,0 +1,22 @@
+{
+  "files.eol": "\n",
+  "files.insertFinalNewline": true,
+  "files.trimTrailingWhitespace": true,
+
+  "editor.insertSpaces": true,
+  "editor.detectIndentation": false,
+  "editor.tabSize": 2,
+  "editor.rulers": [
+    100
+  ],
+
+  "[systemverilog]": {
+    "editor.defaultFormatter": "CHIPSAlliance.verible",
+    "editor.formatOnSave": true
+  },
+
+  "[verilog]": {
+    "editor.defaultFormatter": "CHIPSAlliance.verible",
+    "editor.formatOnSave": true
+  }
+}
