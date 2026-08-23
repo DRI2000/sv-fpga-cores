@@ -59,7 +59,7 @@ module counter_tb;
   initial begin
 
     // Dump waveform
-    $dumpfile("build/waves/counter.vcd");
+    $dumpfile("counter.vcd");
     $dumpvars(0, counter_tb);
 
     // Initialize inputs and expected outputs
