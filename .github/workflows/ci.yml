@@ -51,7 +51,7 @@ jobs:
         id: detect
         run: |
           CHANGED_IPS="$(
-            ./scripts/ci/detect_changed_ips.sh origin/main
+            ./scripts/ci/detect_changes.sh origin/main
           )"
 
           echo "Changed IP cores:"
