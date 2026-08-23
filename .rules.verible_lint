@@ -1,0 +1,4 @@
++explicit-begin
++one-module-per-file
++port-name-suffix
++signal-name-style
