@@ -20,7 +20,7 @@ module counter_tb;
   // Clock generation
   always begin
     #(ClkPeriod / 2);
-    clk_i = ~clk_i;
+    clk_i <= ~clk_i;
   end
 
   // DUT instantiation
@@ -34,21 +34,23 @@ module counter_tb;
   );
 
   // Run a cycle of the counter and compare results
-  task automatic compare_results(input logic enable);
+  task automatic run_cycle(input logic enable);
     en_i = enable;
 
     @(posedge clk_i);
 
-    if (rstn_i) begin
+    if (!rstn_i) begin
       expected_count = '0;
     end else if (enable) begin
       expected_count = expected_count + 1'b1;
     end
 
     @(negedge clk_i);
-
-    assert (count_o === expected_count)
+    assert (count_o == expected_count)
     else begin
+      $display("================================");
+      $display("FAIL: counter_tb");
+      $display("================================");
       $fatal(1, "Counter mismatch: expected %0d, got %0d", expected_count, count_o);
     end
   endtask
@@ -92,7 +94,9 @@ module counter_tb;
     rstn_i = 1'b1;
     run_cycle(1'b1);
 
+    $display("================================");
     $display("PASS: counter_tb");
+    $display("================================");
     $finish;
   end
 

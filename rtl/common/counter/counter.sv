@@ -7,6 +7,8 @@ module counter #(
     output logic [WIDTH-1:0] count_o
 );
 
+  timeunit 1ns; timeprecision 1ps;
+
   always_ff @(posedge clk_i) begin
     if (!rstn_i) begin
       count_o <= '0;
