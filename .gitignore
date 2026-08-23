@@ -1,5 +1,5 @@
 # Verilator
-obj_dir/
+build/
 *.vcd
 *.fst
 
