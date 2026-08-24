@@ -43,7 +43,8 @@ module sync_fifo #(
   end
 
   // Full and empty conditions
-  assign full_o  = (wr_ptr[PtrWidth-1:0] == rd_ptr[PtrWidth-1:0]);
+  assign full_o  = (wr_ptr[PtrWidth-1:0] == rd_ptr[PtrWidth-1:0]) &
+                   (wr_ptr[PtrWidth] != rd_ptr[PtrWidth]);
   assign empty_o = (wr_ptr == rd_ptr);
 
 endmodule
