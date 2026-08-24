@@ -25,7 +25,7 @@ module sync_fifo #(
     if (!rstn_i) begin
       wr_ptr   <= '0;
       fifo_mem <= '{default: '0};
-    end else if (wr_en & ~full_o) begin
+    end else if (wr_en_i & ~full_o) begin
       fifo_mem[wr_ptr[PtrWidth-1:0]] <= wr_data_i;
       wr_ptr <= wr_ptr + 1;
     end
@@ -36,7 +36,7 @@ module sync_fifo #(
     if (!rstn_i) begin
       rd_ptr <= '0;
       rd_data_o <= '0;
-    end else if (rd_en & ~empty_o) begin
+    end else if (rd_en_i & ~empty_o) begin
       rd_data_o <= fifo_mem[rd_ptr[PtrWidth-1:0]];
       rd_ptr <= rd_ptr + 1;
     end
